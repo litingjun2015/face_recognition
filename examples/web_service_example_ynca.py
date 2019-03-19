@@ -19,6 +19,8 @@
 import face_recognition
 from flask import Flask, jsonify, request, redirect
 
+import base64
+
 # You can change this to any folder on your system
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -28,6 +30,26 @@ app = Flask(__name__)
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+
+@app.route('/face/image/match', methods=['POST'])
+def create_task():
+    if not request.json or not 'data' in request.json:
+        abort(400)
+    task = {
+        'data': request.json['data'],
+        'description': request.json.get('description', ""),
+        'done': False
+    }
+
+    imgdata = base64.b64decode( request.json['data'] )
+    filename = 'some_image2019.jpg'  # I assume you have a way of picking unique filenames
+    with open(filename, 'wb') as f:
+        f.write(imgdata)
+
+    return jsonify({'task': task}), 201
+
 
 
 @app.route('/', methods=['GET', 'POST'])
