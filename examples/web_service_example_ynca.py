@@ -33,8 +33,25 @@ def allowed_file(filename):
 
 
 
+@app.route('/face/image/matchN', methods=['POST'])
+def matchN():
+    if not request.json or not 'data' in request.json:
+        abort(400)
+    task = {
+        'data': request.json['data'],
+    }
+
+    imgdata = base64.b64decode( request.json['data'] )
+    filename = 'tmp.jpg'  # I assume you have a way of picking unique filenames
+    with open(filename, 'wb') as f:
+        f.write(imgdata)
+
+    # return jsonify({'task': task}), 201
+    return detect_faces_in_image(filename)
+
+
 @app.route('/face/image/match', methods=['POST'])
-def create_task():
+def match():
     if not request.json or not 'data' in request.json:
         abort(400)
     task = {
@@ -44,7 +61,7 @@ def create_task():
     }
 
     imgdata = base64.b64decode( request.json['data'] )
-    filename = 'some_image2019.jpg'  # I assume you have a way of picking unique filenames
+    filename = 'tmp.jpg'  # I assume you have a way of picking unique filenames
     with open(filename, 'wb') as f:
         f.write(imgdata)
 
