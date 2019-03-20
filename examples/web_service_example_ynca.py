@@ -1,4 +1,6 @@
-# This is a _very simple_ example of a web service that recognizes faces in uploaded images.
+# -*- coding: UTF-8 -*-
+# 
+# # This is a _very simple_ example of a web service that recognizes faces in uploaded images.
 # Upload an image file and it will check if the image contains a picture of Barack Obama.
 # The result is returned as json. For example:
 #
@@ -30,11 +32,16 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 known_faces = [
     ]
 
+known_faces_name = [
+    ]
+
+dict_known_faces = {}
+
 #########################################################################################
 # Load the jpg files into arrays
 #########################################################################################
 def initFaces():
-    print("Init known faces")    
+    print("Init known faces ...")    
 
     biden_image = face_recognition.load_image_file("biden.jpg")
     obama_image = face_recognition.load_image_file("obama.jpg")
@@ -44,9 +51,17 @@ def initFaces():
     obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
     litingjun_face_encoding = face_recognition.face_encodings(litingjun_image)[0]    
 
+    known_faces_name.append("biden")
+    known_faces_name.append("obama")
+    known_faces_name.append("litingjun")
+
     known_faces.append(biden_face_encoding)
     known_faces.append(obama_face_encoding)
     known_faces.append(litingjun_face_encoding)
+
+    dict_known_faces["biden"] = biden_face_encoding
+    dict_known_faces["obama"] = obama_face_encoding
+    dict_known_faces["litingjun"] = litingjun_face_encoding
 #########################################################################################
 
 def create_app():
@@ -57,6 +72,47 @@ def create_app():
 app = create_app()
 
 
+def detect_faces_in_image(file_stream):
+
+    # Load the uploaded image file
+    unknown_image = face_recognition.load_image_file(file_stream)
+    # Get face encodings for any faces in the uploaded image
+    unknown_face_encodings = face_recognition.face_encodings(unknown_image)
+    unknown_face_encoding = unknown_face_encodings[0]
+
+    results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
+
+    face_found = False
+
+    if (not True in results):
+        print("该图片没有在我们的人脸库中")
+
+    i = 0
+    for result in results:
+        
+        if result: 
+            face_found = True
+            username = known_faces_name[i]           
+
+        i = i+1
+
+    # Return the result as json
+    if ( face_found ):
+        result = {
+            "username": username,
+            "info": "success",       
+        }
+    else:
+        result = {
+            "info": "failed"
+        }
+    
+    
+    return jsonify(result)
+
+
+
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -65,6 +121,15 @@ def allowed_file(filename):
 
 @app.route('/face/image/matchN', methods=['POST'])
 def matchN():
+    if not request.json or not 'format' in request.json:
+        format = "png"
+    
+    if not request.json or not 'groupid' in request.json:
+        groupid = "yunnanca:tech"
+
+    if not request.json or not 'top' in request.json:
+        top = 1
+
     if not request.json or not 'data' in request.json:
         abort(400)
     task = {
@@ -76,7 +141,6 @@ def matchN():
     with open(filename, 'wb') as f:
         f.write(imgdata)
 
-    # return jsonify({'task': task}), 201
     return detect_faces_in_image(filename)
 
 
@@ -173,54 +237,7 @@ def compare_faces_with_image(file_stream, username):
 
 
 
-def detect_faces_in_image(file_stream):
 
-    # Load the uploaded image file
-    unknown_image = face_recognition.load_image_file(file_stream)
-    # Get face encodings for any faces in the uploaded image
-    unknown_face_encodings = face_recognition.face_encodings(unknown_image)
-    unknown_face_encoding = unknown_face_encodings[0]
-
-    results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
-
-    face_found = True
-
-    if ( results[0] ):
-        username = "Biden"
-    elif ( results[1] ):
-        username = "Obama"
-    elif ( results[2] ):
-        username = "litingjun"
-    else:
-        face_found = False
-
-    print("Is the unknown face a picture of Biden? {}".format(results[0]))
-    print("Is the unknown face a picture of Obama? {}".format(results[1]))
-    print("Is the unknown face a new person that we've never seen before? {}".format(not True in results))
-
-    
-
-    # if len(unknown_face_encodings) > 0:
-    #     #  face_found = True
-    #     # See if the first face in the uploaded image matches the known face of Obama
-    #     match_results = face_recognition.compare_faces([known_face_encoding], unknown_face_encodings[0])
-    #     if match_results[0]:
-    #         is_obama = True
-
-
-    # Return the result as json
-    if ( face_found ):
-        result = {
-            "username": username,
-            "info": "success",       
-        }
-    else:
-        result = {
-            "info": "failed"
-        }
-    
-    
-    return jsonify(result)
 
 if __name__ == "__main__":
 
