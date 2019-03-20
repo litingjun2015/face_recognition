@@ -24,7 +24,37 @@ import base64
 # You can change this to any folder on your system
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-app = Flask(__name__)
+# https://stackoverflow.com/questions/46586345/how-to-run-function-before-flask-routing-is-starting
+# app = Flask(__name__)
+
+known_faces = [
+    ]
+
+#########################################################################################
+# Load the jpg files into arrays
+#########################################################################################
+def initFaces():
+    print("Init known faces")    
+
+    biden_image = face_recognition.load_image_file("biden.jpg")
+    obama_image = face_recognition.load_image_file("obama.jpg")
+    litingjun_image = face_recognition.load_image_file("litingjun.jpg")
+
+    biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+    obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+    litingjun_face_encoding = face_recognition.face_encodings(litingjun_image)[0]    
+
+    known_faces.append(biden_face_encoding)
+    known_faces.append(obama_face_encoding)
+    known_faces.append(litingjun_face_encoding)
+#########################################################################################
+
+def create_app():
+    initFaces()
+    return Flask(__name__)
+
+
+app = create_app()
 
 
 def allowed_file(filename):
@@ -141,24 +171,7 @@ def compare_faces_with_image(file_stream, username):
     return jsonify(result)
 
 
-known_faces = [
-]
 
-#########################################################################################
-# Load the jpg files into arrays
-#########################################################################################
-biden_image = face_recognition.load_image_file("biden.jpg")
-obama_image = face_recognition.load_image_file("obama.jpg")
-litingjun_image = face_recognition.load_image_file("litingjun.jpg")
-
-biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
-obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
-litingjun_face_encoding = face_recognition.face_encodings(litingjun_image)[0]    
-
-known_faces.append(biden_face_encoding)
-known_faces.append(obama_face_encoding)
-known_faces.append(litingjun_face_encoding)
-#########################################################################################
 
 def detect_faces_in_image(file_stream):
 
