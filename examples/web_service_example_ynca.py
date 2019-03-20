@@ -22,6 +22,7 @@ import face_recognition
 from flask import Flask, jsonify, request, redirect
 
 import base64
+import os
 
 # You can change this to any folder on your system
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -37,36 +38,58 @@ known_faces_name = [
 
 dict_known_faces = {}
 
-#########################################################################################
-# Load the jpg files into arrays
-#########################################################################################
-def initFaces():
-    print("Init known faces ...")    
-
-    biden_image = face_recognition.load_image_file("biden.jpg")
-    obama_image = face_recognition.load_image_file("obama.jpg")
-    litingjun_image = face_recognition.load_image_file("litingjun.jpg")
-
-    biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
-    obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
-    litingjun_face_encoding = face_recognition.face_encodings(litingjun_image)[0]    
-
-    known_faces_name.append("biden")
-    known_faces_name.append("obama")
-    known_faces_name.append("litingjun")
-
-    known_faces.append(biden_face_encoding)
-    known_faces.append(obama_face_encoding)
-    known_faces.append(litingjun_face_encoding)
-
-    dict_known_faces["biden"] = biden_face_encoding
-    dict_known_faces["obama"] = obama_face_encoding
-    dict_known_faces["litingjun"] = litingjun_face_encoding
-#########################################################################################
 
 def create_app():
     initFaces()
     return Flask(__name__)
+
+#########################################################################################
+# Load the jpg files into arrays
+#########################################################################################
+def initFaces():
+    if( len(known_faces) != 0):
+        return
+
+    print("Init known faces ...")    
+    
+    directory = './'
+
+    for filename in os.listdir(directory):
+        if filename.endswith(".png") or filename.endswith(".jpg"): 
+            print(os.path.join(directory, filename))
+
+
+
+            load_image = face_recognition.load_image_file( os.path.join(directory, filename) )
+            load_image_encoding = face_recognition.face_encodings(load_image)[0]
+            known_faces_name.append(filename)
+            known_faces.append(load_image_encoding)
+            dict_known_faces[filename] = load_image_encoding
+
+            continue
+        else:
+            continue
+
+    # biden_image = face_recognition.load_image_file("biden.jpg")
+    # obama_image = face_recognition.load_image_file("obama.jpg")
+    # litingjun_image = face_recognition.load_image_file("litingjun.jpg")
+
+    # biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+    # obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+    # litingjun_face_encoding = face_recognition.face_encodings(litingjun_image)[0]    
+
+    # known_faces_name.append("biden")
+    # known_faces_name.append("obama")
+    # known_faces_name.append("litingjun")
+
+    # known_faces.append(biden_face_encoding)
+    # known_faces.append(obama_face_encoding)
+    # known_faces.append(litingjun_face_encoding)
+
+    # dict_known_faces["biden"] = biden_face_encoding
+    # dict_known_faces["obama"] = obama_face_encoding
+    # dict_known_faces["litingjun"] = litingjun_face_encoding
+#########################################################################################
 
 
 app = create_app()
