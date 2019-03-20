@@ -140,30 +140,33 @@ def compare_faces_with_image(file_stream, username):
     
     return jsonify(result)
 
+
+known_faces = [
+]
+
+#########################################################################################
+# Load the jpg files into arrays
+#########################################################################################
+biden_image = face_recognition.load_image_file("biden.jpg")
+obama_image = face_recognition.load_image_file("obama.jpg")
+litingjun_image = face_recognition.load_image_file("litingjun.jpg")
+
+biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+litingjun_face_encoding = face_recognition.face_encodings(litingjun_image)[0]    
+
+known_faces.append(biden_face_encoding)
+known_faces.append(obama_face_encoding)
+known_faces.append(litingjun_face_encoding)
+#########################################################################################
+
 def detect_faces_in_image(file_stream):
 
     # Load the uploaded image file
-    img = face_recognition.load_image_file(file_stream)
+    unknown_image = face_recognition.load_image_file(file_stream)
     # Get face encodings for any faces in the uploaded image
-    unknown_face_encodings = face_recognition.face_encodings(img)
-
-
-    # Load the jpg files into numpy arrays
-    biden_image = face_recognition.load_image_file("biden.jpg")
-    obama_image = face_recognition.load_image_file("obama.jpg")
-    litingjun_image = face_recognition.load_image_file("litingjun.jpg")
-    # unknown_image = face_recognition.load_image_file("obama2.jpg")
-
-    biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
-    obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
-    litingjun_face_encoding = face_recognition.face_encodings(litingjun_image)[0]
+    unknown_face_encodings = face_recognition.face_encodings(unknown_image)
     unknown_face_encoding = unknown_face_encodings[0]
-
-    known_faces = [
-        biden_face_encoding,
-        obama_face_encoding,
-        litingjun_face_encoding
-    ]
 
     results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
 
@@ -207,4 +210,6 @@ def detect_faces_in_image(file_stream):
     return jsonify(result)
 
 if __name__ == "__main__":
+
+
     app.run(host='0.0.0.0', port=5001, debug=True)
