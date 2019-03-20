@@ -23,6 +23,7 @@ from flask import Flask, jsonify, request, redirect
 
 import base64
 import os
+import time
 
 # You can change this to any folder on your system
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -50,25 +51,26 @@ def initFaces():
     if( len(known_faces) != 0):
         return
 
-    print("Init known faces ...")    
+    print("Loading known faces ...")    
     
     directory = './'
 
+    start_time = time.time()  
     for filename in os.listdir(directory):
         if filename.endswith(".png") or filename.endswith(".jpg"): 
-            print(os.path.join(directory, filename))
-
-
+            print(os.path.join(directory, filename ))
 
             load_image = face_recognition.load_image_file( os.path.join(directory, filename) )
             load_image_encoding = face_recognition.face_encodings(load_image)[0]
-            known_faces_name.append(filename)
+            known_faces_name.append( os.path.splitext(filename)[0] )
             known_faces.append(load_image_encoding)
-            dict_known_faces[filename] = load_image_encoding
+            dict_known_faces[ os.path.splitext(filename)[0] ] = load_image_encoding
 
             continue
         else:
             continue
+
+    print("--- %s seconds ---" % (time.time() - start_time))
 
     # biden_image = face_recognition.load_image_file("biden.jpg")
     # obama_image = face_recognition.load_image_file("obama.jpg")
@@ -97,6 +99,8 @@ app = create_app()
 
 def detect_faces_in_image(file_stream):
 
+    start_time = time.time()
+
     # Load the uploaded image file
     unknown_image = face_recognition.load_image_file(file_stream)
     # Get face encodings for any faces in the uploaded image
@@ -104,7 +108,7 @@ def detect_faces_in_image(file_stream):
     unknown_face_encoding = unknown_face_encodings[0]
 
     results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
-
+    
     face_found = False
 
     if (not True in results):
@@ -113,11 +117,13 @@ def detect_faces_in_image(file_stream):
     i = 0
     for result in results:
         
-        if result: 
+        if result and known_faces_name[i] != "tmp": 
             face_found = True
             username = known_faces_name[i]           
 
         i = i+1
+
+    print("--- Found user in %s seconds ---" % (time.time() - start_time))
 
     # Return the result as json
     if ( face_found ):
