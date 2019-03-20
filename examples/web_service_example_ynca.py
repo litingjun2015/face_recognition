@@ -121,6 +121,7 @@ def allowed_file(filename):
 
 @app.route('/face/image/matchN', methods=['POST'])
 def matchN():
+
     if not request.json or not 'format' in request.json:
         format = "png"
     
@@ -130,12 +131,31 @@ def matchN():
     if not request.json or not 'top' in request.json:
         top = 1
 
+    
+
+    # $ curl -XPOST -F "file=@obama2.jpg" http://192.168.10.10:5001/face/image/matchN
+    # Check if a valid image file was uploaded
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            print "check Data"
+        else:
+            file = request.files['file']
+
+            if file.filename == '':
+                return redirect(request.url)
+
+            if file and allowed_file(file.filename):
+                # The image file seems valid! Detect faces and return the result.
+                return detect_faces_in_image(file)
+
+
     if not request.json or not 'data' in request.json:
         abort(400)
     task = {
         'data': request.json['data'],
     }
 
+    # For data is Base64
     imgdata = base64.b64decode( request.json['data'] )
     filename = 'tmp.jpg'  # I assume you have a way of picking unique filenames
     with open(filename, 'wb') as f:
