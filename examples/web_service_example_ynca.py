@@ -53,7 +53,7 @@ def initFaces():
 
     print("Loading known faces ...")    
     
-    directory = './'
+    directory = './pics'
 
     start_time = time.time()  
     for filename in os.listdir(directory):
@@ -99,31 +99,37 @@ app = create_app()
 
 def detect_faces_in_image(file_stream):
 
+    face_found = False
     start_time = time.time()
 
     # Load the uploaded image file
     unknown_image = face_recognition.load_image_file(file_stream)
-    # Get face encodings for any faces in the uploaded image
-    unknown_face_encodings = face_recognition.face_encodings(unknown_image)
-    unknown_face_encoding = unknown_face_encodings[0]
-
-    results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
-    
-    face_found = False
-
-    if (not True in results):
-        print("该图片没有在我们的人脸库中")
-
-    i = 0
-    for result in results:
+    # print(unknown_image)
+    try:
+        # Get face encodings for any faces in the uploaded image
+        unknown_face_encodings = face_recognition.face_encodings(unknown_image)
+        # print(unknown_face_encodings)
+        unknown_face_encoding = unknown_face_encodings[0]
+        # print(unknown_face_encoding)
+        results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
         
-        if result and known_faces_name[i] != "tmp": 
-            face_found = True
-            username = known_faces_name[i]           
+        if (not True in results):
+            print("该图片没有在我们的人脸库中")
 
-        i = i+1
+        i = 0
+        for result in results:
+            
+            if result and known_faces_name[i] != "tmp": 
+                face_found = True
+                username = known_faces_name[i]           
 
-    print("--- Found user in %s seconds ---" % (time.time() - start_time))
+            i = i+1
+
+        print("--- Found user in %s seconds ---" % (time.time() - start_time))
+
+    except IndexError:
+        print("该图片没有在我们的人脸库中，请重新拍摄")
+    
 
     # Return the result as json
     if ( face_found ):
@@ -243,31 +249,51 @@ def upload_image():
 
 def compare_faces_with_image(file_stream, username):
 
-    # Load the uploaded image file
-    img = face_recognition.load_image_file(file_stream)
-    # Get face encodings for any faces in the uploaded image
-    unknown_face_encodings = face_recognition.face_encodings(img)
+    
+
+    try:
+        start_time = time.time()
+
+        # Load the uploaded image file
+        img = face_recognition.load_image_file(file_stream)
+
+        print("--- load_image_file in %s seconds ---" % (time.time() - start_time))
+
+        start_time = time.time()
+        # Get face encodings for any faces in the uploaded image
+        unknown_face_encodings = face_recognition.face_encodings(img)
+        print("--- face_encodings in %s seconds ---" % (time.time() - start_time))
 
 
-    # Load the jpg files into numpy arrays
-    username_image = face_recognition.load_image_file(username + ".jpg")
+        start_time = time.time()
+        # Load the jpg files into numpy arrays
+        username_image = face_recognition.load_image_file(username + ".jpg")
+        print("--- load_image_file in %s seconds ---" % (time.time() - start_time))
 
-    username_face_encoding = face_recognition.face_encodings(username_image)[0]
+        start_time = time.time()
+        username_face_encoding = face_recognition.face_encodings(username_image)[0]
+        print("--- face_encodings in %s seconds ---" % (time.time() - start_time))
 
-    unknown_face_encoding = unknown_face_encodings[0]
+        unknown_face_encoding = unknown_face_encodings[0]
 
-    known_faces = [
-        username_face_encoding,
-    ]
+        known_faces = [
+            username_face_encoding,
+        ]
 
-    results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
+        start_time = time.time()
+        results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
+        print("--- compare_faces in %s seconds ---" % (time.time() - start_time))
 
-    face_found = True
+        face_found = True
 
-    if ( results[0] ):
-        username = username
-    else:
-        face_found = False
+        if ( results[0] ):
+            username = username
+        else:
+            face_found = False
+
+        print("--- Found user in %s seconds ---" % (time.time() - start_time))
+    except IndexError:
+        face_found = False   
 
     # Return the result as json
     if ( face_found ):
