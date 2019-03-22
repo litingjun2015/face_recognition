@@ -237,6 +237,7 @@ def match():
     # For data is Base64
     imgdata = base64.b64decode( request.json['data'] )
     
+
     file_stream = datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg'  # I assume you have a way of picking unique filenames
     print "save Data stream to file: " + file_stream
     # print filename
@@ -291,7 +292,7 @@ def compare_faces_with_image(file_stream, username):
 
         # Load the uploaded image file
         img = face_recognition.load_image_file(file_stream)
-        print("--- load_image_file file_stream " + file_stream.filename + " in %s seconds ---" % (time.time() - start_time))
+        print("--- load_image_file file_stream in %s seconds ---" % (time.time() - start_time))
 
         start_time = time.time()
         # Get face encodings for any faces in the uploaded image
