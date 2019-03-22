@@ -201,7 +201,14 @@ def match():
 
     if not request.json or not 'top' in request.json:
         top = 1
+
+    if not request.json or not 'username' in request.json:
+        print "1:N mode"
+    else:
+        username = request.json['username']
     #########################################################################################    
+
+    print 
 
     # $ curl -XPOST -F "file=@obama2.jpg" http://192.168.10.10:5001/face/image/matchN
     # Check if a valid image file was uploaded
@@ -230,12 +237,13 @@ def match():
     # For data is Base64
     imgdata = base64.b64decode( request.json['data'] )
     
-    filename = datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg'  # I assume you have a way of picking unique filenames
-    print filename
-    with open(filename, 'wb') as f:
+    file_stream = datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg'  # I assume you have a way of picking unique filenames
+    print "save Data stream to file: " + file_stream
+    # print filename
+    with open(file_stream, 'wb') as f:
         f.write(imgdata)
 
-    return detect_faces_in_image(filename)
+    return compare_faces_with_image(file_stream, username)
 
 
 
