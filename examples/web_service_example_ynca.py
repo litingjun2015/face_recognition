@@ -43,6 +43,7 @@ known_faces_name = [
 dict_known_faces = {}
 
 known_faces_path = './pics'
+unknown_faces_path = './pics/tmp/'
 
 
 def create_app():
@@ -238,7 +239,7 @@ def match():
     imgdata = base64.b64decode( request.json['data'] )
     
 
-    file_stream = datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg'  # I assume you have a way of picking unique filenames
+    file_stream = unknown_faces_path + datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg'  # I assume you have a way of picking unique filenames
     print "save Data stream to file: " + file_stream
     # print filename
     with open(file_stream, 'wb') as f:
@@ -297,9 +298,9 @@ def compare_faces_with_image(file_stream, username):
         start_time = time.time()
         # Get face encodings for any faces in the uploaded image
         unknown_face_encodings = face_recognition.face_encodings(img)
-        print("--- face_encodings in %s seconds ---" % (time.time() - start_time))
+        print("--- face_encodings in %s seconds ---" % (time.time() - start_time)    )
 
-        print os.path.dirname(os.path.abspath(__file__))
+        # print os.path.dirname(os.path.abspath(__file__))
 
         start_time = time.time()
         # Load the jpg files into numpy arrays
