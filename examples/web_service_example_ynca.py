@@ -4,7 +4,9 @@
 # Upload an image file and it will check if the image contains a picture of Barack Obama.
 # The result is returned as json. For example:
 #
-# $ curl -XPOST -F "file=@obama2.jpg" http://127.0.0.1:5001
+# $ curl -XPOST -F "file=@20190321081141.jpg" http://192.168.2.70:5001/face/image/matchN
+# curl -XPOST -F "file=@john1.jpg" http://192.168.2.70:5001/face/image/matchN
+# curl -H "Accept: application/json" -H "Content-type: application/json"  -d '{"id":100}' -X POST -F "file=@john1.jpg" http://192.168.2.70:5001/face/image/matchN
 #
 # Returns:
 #
@@ -24,6 +26,7 @@ from flask import Flask, jsonify, request, redirect
 import base64
 import os
 import time
+import datetime
 
 # You can change this to any folder on your system
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -39,6 +42,8 @@ known_faces_name = [
 
 dict_known_faces = {}
 
+known_faces_path = './pics'
+
 
 def create_app():
     initFaces()
@@ -52,15 +57,13 @@ def initFaces():
         return
 
     print("Loading known faces ...")    
-    
-    directory = './pics'
 
     start_time = time.time()  
-    for filename in os.listdir(directory):
+    for filename in os.listdir(known_faces_path):
         if filename.endswith(".png") or filename.endswith(".jpg"): 
-            print(os.path.join(directory, filename ))
+            print(os.path.join(known_faces_path, filename ))
 
-            load_image = face_recognition.load_image_file( os.path.join(directory, filename) )
+            load_image = face_recognition.load_image_file( os.path.join(known_faces_path, filename) )
             load_image_encoding = face_recognition.face_encodings(load_image)[0]
             known_faces_name.append( os.path.splitext(filename)[0] )
             known_faces.append(load_image_encoding)
@@ -112,6 +115,7 @@ def detect_faces_in_image(file_stream):
         unknown_face_encoding = unknown_face_encodings[0]
         # print(unknown_face_encoding)
         results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
+        print results
         
         if (not True in results):
             print("该图片没有在我们的人脸库中")
@@ -154,9 +158,10 @@ def allowed_file(filename):
 
 
 
-@app.route('/face/image/matchN', methods=['POST'])
-def matchN():
-
+@app.route('/face/image/match2', methods=['POST'])
+def match2():
+    
+    ######################################## check ######################################## 
     if not request.json or not 'format' in request.json:
         format = "png"
     
@@ -165,42 +170,8 @@ def matchN():
 
     if not request.json or not 'top' in request.json:
         top = 1
+    #########################################################################################
 
-    
-
-    # $ curl -XPOST -F "file=@obama2.jpg" http://192.168.10.10:5001/face/image/matchN
-    # Check if a valid image file was uploaded
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            print "check Data"
-        else:
-            file = request.files['file']
-
-            if file.filename == '':
-                return redirect(request.url)
-
-            if file and allowed_file(file.filename):
-                # The image file seems valid! Detect faces and return the result.
-                return detect_faces_in_image(file)
-
-
-    if not request.json or not 'data' in request.json:
-        abort(400)
-    task = {
-        'data': request.json['data'],
-    }
-
-    # For data is Base64
-    imgdata = base64.b64decode( request.json['data'] )
-    filename = 'tmp.jpg'  # I assume you have a way of picking unique filenames
-    with open(filename, 'wb') as f:
-        f.write(imgdata)
-
-    return detect_faces_in_image(filename)
-
-
-@app.route('/face/image/match', methods=['POST'])
-def match():
     if not request.json or not 'data' in request.json:
         abort(400)
     task = {
@@ -210,12 +181,64 @@ def match():
     }
 
     imgdata = base64.b64decode( request.json['data'] )
-    filename = 'tmp.jpg'  # I assume you have a way of picking unique filenames
-    with open(filename, 'wb') as f:
+    file_stream = 'tmp.jpg'  # I assume you have a way of picking unique filenames
+    with open(file_stream, 'wb') as f:
         f.write(imgdata)
 
     # return jsonify({'task': task}), 201
-    return compare_faces_with_image(filename, request.json['username'])
+    return compare_faces_with_image(file_stream, request.json['username'])
+
+
+@app.route('/face/image/match', methods=['POST'])
+def match():
+
+    ######################################## check ######################################## 
+    if not request.json or not 'format' in request.json:
+        format = "png"
+    
+    if not request.json or not 'groupid' in request.json:
+        groupid = "yunnanca:tech"
+
+    if not request.json or not 'top' in request.json:
+        top = 1
+    #########################################################################################    
+
+    # $ curl -XPOST -F "file=@obama2.jpg" http://192.168.10.10:5001/face/image/matchN
+    # Check if a valid image file was uploaded
+    if request.method == 'POST':
+        if 'file' in request.files:            
+            file_stream = request.files['file']
+
+            if file_stream.filename == '':
+                return redirect(request.url)
+
+            if file_stream and allowed_file(file_stream.filename):
+              
+                # The image file seems valid! Detect faces and return the result.
+                return compare_faces_with_image(file_stream, file_stream.filename)
+        else:
+            print "check Http Body"
+
+
+    if not request.json or not 'data' in request.json:
+        abort(400)
+    task = {
+        'data': request.json['data'],        
+    }
+    # print request.json['data']
+
+    # For data is Base64
+    imgdata = base64.b64decode( request.json['data'] )
+    
+    filename = datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg'  # I assume you have a way of picking unique filenames
+    print filename
+    with open(filename, 'wb') as f:
+        f.write(imgdata)
+
+    return detect_faces_in_image(filename)
+
+
+
 
 
 
@@ -247,28 +270,34 @@ def upload_image():
     '''
 
 
-def compare_faces_with_image(file_stream, username):
-
-    
+def compare_faces_with_image(file_stream, username):  
 
     try:
+        process_username = os.path.splitext(username)[0]
+
+        # print('file_stream')
+        # print file_stream
+        # print('username='+username)
+
         start_time = time.time()
 
         # Load the uploaded image file
         img = face_recognition.load_image_file(file_stream)
-
-        print("--- load_image_file in %s seconds ---" % (time.time() - start_time))
+        print("--- load_image_file file_stream " + file_stream.filename + " in %s seconds ---" % (time.time() - start_time))
 
         start_time = time.time()
         # Get face encodings for any faces in the uploaded image
         unknown_face_encodings = face_recognition.face_encodings(img)
         print("--- face_encodings in %s seconds ---" % (time.time() - start_time))
 
+        print os.path.dirname(os.path.abspath(__file__))
 
         start_time = time.time()
         # Load the jpg files into numpy arrays
-        username_image = face_recognition.load_image_file(username + ".jpg")
-        print("--- load_image_file in %s seconds ---" % (time.time() - start_time))
+        file_path = os.path.join(known_faces_path, process_username + ".jpg")
+
+        username_image = face_recognition.load_image_file( file_path )
+        print("--- load_image_file " + file_path + " in %s seconds ---" % (time.time() - start_time))
 
         start_time = time.time()
         username_face_encoding = face_recognition.face_encodings(username_image)[0]
@@ -294,11 +323,16 @@ def compare_faces_with_image(file_stream, username):
         print("--- Found user in %s seconds ---" % (time.time() - start_time))
     except IndexError:
         face_found = False   
+    except IOError:
+        result = {
+            "info": "user " + process_username +" not found"
+        }
+        return jsonify(result)
 
     # Return the result as json
     if ( face_found ):
         result = {
-            "username": username,
+            "username": process_username,
             "info": "success",       
         }
     else:
