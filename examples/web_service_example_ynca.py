@@ -29,6 +29,13 @@ import time
 import datetime
 import logging
 
+from enum import Enum, unique
+
+@unique
+class Mode(Enum):
+    m1_1 = 0 # 1:1
+    m1_N = 1 # 1:N
+
 
 def console_out(logFilename):
     ''' Output log to file and console '''
@@ -195,9 +202,10 @@ def allowed_file(filename):
 
 
 
-@app.route('/face/image/match2', methods=['POST'])
-def match2():
-    
+
+@app.route('/face/image/matchN', methods=['POST'])
+def matchN():
+
     ######################################## check ######################################## 
     if not request.json or not 'format' in request.json:
         format = "png"
@@ -207,23 +215,56 @@ def match2():
 
     if not request.json or not 'top' in request.json:
         top = 1
-    #########################################################################################
+
+    if not request.json or not 'username' in request.json:
+        logging.debug("1:N mode") 
+        username = "user"
+    else:
+        username = request.json['username']
+    #########################################################################################    
+
+
+    # $ curl -XPOST -F "file=@obama2.jpg" http://192.168.10.10:5001/face/image/matchN
+    # Check if a valid image file was uploaded
+    if request.method == 'POST':
+        if 'file' in request.files:     
+            logging.debug("Get Http Post file") 
+
+            file_stream = request.files['file']
+
+            if file_stream.filename == '':
+                return redirect(request.url)
+
+            if file_stream and allowed_file(file_stream.filename):
+              
+                logging.debug("call compare_faces_with_image") 
+                # The image file seems valid! Detect faces and return the result.
+                return compare_faces_with_image(file_stream, file_stream.filename)
+        else:
+            logging.debug("Try to check Http Post Body") 
+
 
     if not request.json or not 'data' in request.json:
         abort(400)
     task = {
-        'data': request.json['data'],
-        'description': request.json.get('description', ""),
-        'done': False
+        'data': request.json['data'],        
     }
+    # logging.debug request.json['data']
 
+    # For data is Base64
     imgdata = base64.b64decode( request.json['data'] )
-    file_stream = 'tmp.jpg'  # I assume you have a way of picking unique filenames
+    
+
+    file_stream = unknown_faces_path + username + "_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg'  # I assume you have a way of picking unique filenames
+    logging.debug("save data stream to file: " + file_stream) 
+    # logging.debug filename
     with open(file_stream, 'wb') as f:
         f.write(imgdata)
 
-    # return jsonify({'task': task}), 201
-    return compare_faces_with_image(file_stream, request.json['username'])
+    logging.debug("call compare_faces_with_image") 
+    return compare_faces_with_image(file_stream, username, Mode.m1_N)
+
+
 
 
 @app.route('/face/image/match', methods=['POST'])
@@ -245,7 +286,6 @@ def match():
         username = request.json['username']
     #########################################################################################    
 
-    logging.debug 
 
     # $ curl -XPOST -F "file=@obama2.jpg" http://192.168.10.10:5001/face/image/matchN
     # Check if a valid image file was uploaded
@@ -320,9 +360,12 @@ def upload_image():
     '''
 
 
-def compare_faces_with_image(file_stream, username):  
+
+
+def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):  
 
     try:
+
         process_username = os.path.splitext(username)[0]
 
         # logging.debug('file_stream')
@@ -330,8 +373,6 @@ def compare_faces_with_image(file_stream, username):
         # logging.debug('username='+username)
 
         begin_time = time.time()
-
-        logging.debug("##################### 1:1 Mode ###########################")
 
         # Load the uploaded image file
         img = face_recognition.load_image_file(file_stream)
@@ -342,32 +383,49 @@ def compare_faces_with_image(file_stream, username):
         unknown_face_encodings = face_recognition.face_encodings(img)
         unknown_face_encoding = unknown_face_encodings[0]
         logging.debug("## face_encodings                       in %s seconds ##" %  round((time.time() - start_time), 2)      )
-        
 
-        start_time = time.time()
-        # Load the jpg files into numpy arrays
-        file_path = os.path.join(known_faces_path, process_username + ".jpg")
+        if(mode.value == 0):
+            # str(mode.value)
+            logging.debug("##################### 1:1 Mode ###########################")                        
 
-        username_image = face_recognition.load_image_file( file_path )
-        logging.debug("## load_image_file " + file_path + " in %s seconds ##" % round((time.time() - start_time), 2))
+            start_time = time.time()
+            # Load the jpg files into numpy arrays
+            file_path = os.path.join(known_faces_path, process_username + ".jpg")
 
-        start_time = time.time()
-        username_face_encoding = face_recognition.face_encodings(username_image)[0]
-        logging.debug("## face_encodings                       in %s seconds ##" % round((time.time() - start_time), 2))
-        
-        local_known_faces = [
-            username_face_encoding,
-        ]
+            username_image = face_recognition.load_image_file( file_path )
+            logging.debug("## load_image_file " + file_path + " in %s seconds ##" % round((time.time() - start_time), 2))
 
+            start_time = time.time()
+            username_face_encoding = face_recognition.face_encodings(username_image)[0]
+            logging.debug("## face_encodings                       in %s seconds ##" % round((time.time() - start_time), 2))
+            
+            local_known_faces = [
+                username_face_encoding,
+            ]
 
-        start_time = time.time()
-        results = face_recognition.compare_faces(local_known_faces, unknown_face_encoding)
-        logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))       
+            start_time = time.time()
+            results = face_recognition.compare_faces(local_known_faces, unknown_face_encoding)
+            logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))       
 
-        if ( results[0] ):            
-            face_found = True
+            if ( results[0] ):            
+                face_found = True
+            else:
+                face_found = False
         else:
+            logging.debug("##################### 1:N Mode ###########################")
+
+            results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
+            logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))  
+
+            logging.debug(known_faces_name)
+            logging.debug(results)
+
             face_found = False
+            for index in range(len(results)):
+                if results[index] == True:
+                    face_found = True
+                    process_username = known_faces_name[index]
+                    break
      
     except IndexError:
         face_found = False   
@@ -380,17 +438,12 @@ def compare_faces_with_image(file_stream, username):
         logging.debug(known_faces_name)
         logging.debug(results)
 
-
         face_found = False
         for index in range(len(results)):
             if results[index] == True:
                 face_found = True
                 process_username = known_faces_name[index]
                 break
-            
-            
-
-           
 
 
     logging.debug("## compare_faces_with_image used in total  %s seconds ##" % round((time.time() - begin_time), 2))
