@@ -31,6 +31,8 @@ import logging
 
 from enum import Enum, unique
 
+import pickle
+
 @unique
 class Mode(Enum):
     m1_1 = 0 # 1:1
@@ -85,6 +87,8 @@ known_faces_name = [
 
 dict_known_faces = {}
 
+all_face_encodings = {}
+
 known_faces_path = './pics'
 unknown_faces_path = './pics/tmp/'
 
@@ -106,17 +110,33 @@ def initFaces():
     for filename in os.listdir(known_faces_path):
         if filename.endswith(".png") or filename.endswith(".jpg"): 
             logging.debug(os.path.join(known_faces_path, filename ))
+            
+            username = os.path.splitext(filename)[0]
 
             load_image = face_recognition.load_image_file( os.path.join(known_faces_path, filename) )
+            # logging.debug("load_image_file use %s seconds" % round((time.time() - start_time), 2))
+
+            # start_time = time.time()  
             load_image_encoding = face_recognition.face_encodings(load_image)[0]
-            known_faces_name.append( os.path.splitext(filename)[0] )
-            known_faces.append(load_image_encoding)
-            dict_known_faces[ os.path.splitext(filename)[0] ] = load_image_encoding
+            # logging.debug(load_image_encoding)
+            # logging.debug("face_encodings use %s seconds" % round((time.time() - start_time), 2))
+            all_face_encodings[ username ] = load_image_encoding
+
+            # start_time = time.time()  
+            known_faces_name.append( username )
+            known_faces.append( load_image_encoding )
+            dict_known_faces[ username ] = load_image_encoding
+            # logging.debug("append use %s seconds" % round((time.time() - start_time), 2))
 
             continue
         else:
             continue
 
+    logging.debug("======================================== use %s seconds ========================================" % round((time.time() - start_time), 2))
+
+    with open('dataset_faces.dat', 'wb') as f:
+        pickle.dump(all_face_encodings, f)
+    
     logging.debug("======================================== use %s seconds ========================================" % round((time.time() - start_time), 2))
 
     # biden_image = face_recognition.load_image_file("biden.jpg")
