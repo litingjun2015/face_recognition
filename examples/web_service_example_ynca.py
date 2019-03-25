@@ -404,7 +404,7 @@ def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):
             ]
 
             start_time = time.time()
-            results = face_recognition.compare_faces(local_known_faces, unknown_face_encoding)
+            results = face_recognition.compare_faces(local_known_faces, unknown_face_encoding, 0.5)
             logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))       
 
             if ( results[0] ):            
@@ -414,7 +414,7 @@ def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):
         else:
             logging.debug("##################### 1:N Mode ###########################")
 
-            results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
+            results = face_recognition.compare_faces(known_faces, unknown_face_encoding, 0.5)
             logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))  
 
             logging.debug(known_faces_name)
@@ -432,7 +432,7 @@ def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):
     except IOError:
         logging.debug("##################### 1:N Mode ###########################")
         
-        results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
+        results = face_recognition.compare_faces(known_faces, unknown_face_encoding, 0.5)
         logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))  
 
         logging.debug(known_faces_name)
