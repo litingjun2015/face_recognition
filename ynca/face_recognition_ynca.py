@@ -130,10 +130,21 @@ def initFacesFromDatafile():
 
 ###############################################################################
 
+
+def after_request(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'PUT,GET,POST,DELETE'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    return response
+
+
 def create_app():
     # initFaces()
-    initFacesFromDatafile()
-    return Flask(__name__)
+    initFacesFromDatafile()    
+    app = Flask(__name__)
+    app.after_request(after_request)
+
+    return app
 
 app = create_app()
 
