@@ -94,19 +94,18 @@ all_face_encodings = {}
 known_faces_path = './pics'
 unknown_faces_path = './pics/tmp/'
 
-#########################################################################################
+###############################################################################
 # Load the jpg files into arrays
-#########################################################################################
+###############################################################################
 def initFacesFromDatafile():
    
     global known_faces
     global known_faces_name
 
-    # TODO
     if( len(known_faces) != 0):
         return
 
-    logging.debug("---------------------------------------- Loading known faces from data file ----------------------------------------")    
+    logging.debug("--------------- Loading known faces from data file ---------")    
 
     start_time = time.time()  
 
@@ -117,14 +116,16 @@ def initFacesFromDatafile():
     # Grab the list of names and the list of encodings
     known_faces_name = list(all_face_encodings.keys())
     known_faces = np.array(list(all_face_encodings.values()))
-    
-    logging.debug("======================================== use %s seconds ========================================" % round((time.time() - start_time), 2))
-#########################################################################################
+
+    logging.debug("=============== load {} faces use {} seconds ===============" 
+        .format( len(known_faces_name), round((time.time() - start_time), 2)) )
+
+###############################################################################
 
 
-#########################################################################################
+###############################################################################
 # Load the jpg files into arrays
-#########################################################################################
+###############################################################################
 def initFaces():
     global known_faces
     global known_faces_name
@@ -181,7 +182,7 @@ def initFaces():
     # known_faces.append(biden_face_encoding)
     # known_faces.append(obama_face_encoding)
     # known_faces.append(litingjun_face_encoding)
-#########################################################################################
+###############################################################################
 
 def create_app():
     # initFaces()
@@ -273,7 +274,7 @@ def matchN():
         username = "user"
     else:
         username = request.json['username']
-    #########################################################################################    
+    ###############################################################################    
 
 
     # $ curl -XPOST -F "file=@obama2.jpg" http://192.168.10.10:5001/face/image/matchN
@@ -337,7 +338,7 @@ def match():
         username = "user"
     else:
         username = request.json['username']
-    #########################################################################################    
+    ###############################################################################    
 
 
     # $ curl -XPOST -F "file=@obama2.jpg" http://192.168.10.10:5001/face/image/matchN
