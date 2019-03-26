@@ -21,7 +21,7 @@
 # $ pip3 install flask
 
 import face_recognition
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify, request, redirect, abort
 
 import base64
 import os
@@ -32,6 +32,8 @@ import logging
 from enum import Enum, unique
 
 import pickle
+import numpy as np
+
 
 @unique
 class Mode(Enum):
@@ -79,6 +81,8 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 # https://stackoverflow.com/questions/46586345/how-to-run-function-before-flask-routing-is-starting
 # app = Flask(__name__)
 
+tolerance = 0.4
+
 known_faces = [
     ]
 
@@ -95,7 +99,85 @@ unknown_faces_path = './pics/tmp/'
 
 def create_app():
     initFaces()
+    # initFacesFromDatafile()
     return Flask(__name__)
+
+
+
+#########################################################################################
+# Load the jpg files into arrays
+#########################################################################################
+def initFacesFromDatafile():
+   
+    # TODO
+    # if( len(known_faces) != 0):
+    #     return
+
+    logging.debug("---------------------------------------- Loading known faces from data file ----------------------------------------")    
+
+    start_time = time.time()  
+
+    # Load face encodings
+    with open('dataset_faces.dat', 'rb') as f:
+	    all_face_encodings = pickle.load(f)
+
+    # Grab the list of names and the list of encodings
+    known_faces_name = list(all_face_encodings.keys())
+    known_faces = np.array(list(all_face_encodings.values()))
+
+    # for filename in os.listdir(known_faces_path):
+    #     if filename.endswith(".png") or filename.endswith(".jpg"): 
+    #         logging.debug(os.path.join(known_faces_path, filename ))
+            
+    #         username = os.path.splitext(filename)[0]
+
+    #         load_image = face_recognition.load_image_file( os.path.join(known_faces_path, filename) )
+    #         # logging.debug("load_image_file use %s seconds" % round((time.time() - start_time), 2))
+
+    #         # start_time = time.time()  
+    #         load_image_encoding = face_recognition.face_encodings(load_image)[0]
+    #         # logging.debug(load_image_encoding)
+    #         # logging.debug("face_encodings use %s seconds" % round((time.time() - start_time), 2))
+    #         all_face_encodings[ username ] = load_image_encoding
+
+    #         # start_time = time.time()  
+    #         known_faces_name.append( username )
+    #         known_faces.append( load_image_encoding )
+    #         dict_known_faces[ username ] = load_image_encoding
+    #         # logging.debug("append use %s seconds" % round((time.time() - start_time), 2))
+
+    #         continue
+    #     else:
+    #         continue
+
+    logging.debug("======================================== use %s seconds ========================================" % round((time.time() - start_time), 2))
+
+    with open('dataset_faces.dat', 'wb') as f:
+        pickle.dump(all_face_encodings, f)
+    
+    logging.debug("======================================== use %s seconds ========================================" % round((time.time() - start_time), 2))
+
+    # biden_image = face_recognition.load_image_file("biden.jpg")
+    # obama_image = face_recognition.load_image_file("obama.jpg")
+    # litingjun_image = face_recognition.load_image_file("litingjun.jpg")
+
+    # biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+    # obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+    # litingjun_face_encoding = face_recognition.face_encodings(litingjun_image)[0]    
+
+    # known_faces_name.append("biden")
+    # known_faces_name.append("obama")
+    # known_faces_name.append("litingjun")
+
+    # known_faces.append(biden_face_encoding)
+    # known_faces.append(obama_face_encoding)
+    # known_faces.append(litingjun_face_encoding)
+
+    # dict_known_faces["biden"] = biden_face_encoding
+    # dict_known_faces["obama"] = obama_face_encoding
+    # dict_known_faces["litingjun"] = litingjun_face_encoding
+#########################################################################################
+
 
 #########################################################################################
 # Load the jpg files into arrays
@@ -302,6 +384,7 @@ def match():
 
     if not request.json or not 'username' in request.json:
         logging.debug("1:N mode") 
+        username = "user"
     else:
         username = request.json['username']
     #########################################################################################    
@@ -424,7 +507,7 @@ def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):
             ]
 
             start_time = time.time()
-            results = face_recognition.compare_faces(local_known_faces, unknown_face_encoding, 0.5)
+            results = face_recognition.compare_faces(local_known_faces, unknown_face_encoding, tolerance)
             logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))       
 
             if ( results[0] ):            
@@ -434,7 +517,7 @@ def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):
         else:
             logging.debug("##################### 1:N Mode ###########################")
 
-            results = face_recognition.compare_faces(known_faces, unknown_face_encoding, 0.5)
+            results = face_recognition.compare_faces(known_faces, unknown_face_encoding, tolerance)
             logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))  
 
             logging.debug(known_faces_name)
@@ -452,7 +535,7 @@ def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):
     except IOError:
         logging.debug("##################### 1:N Mode ###########################")
         
-        results = face_recognition.compare_faces(known_faces, unknown_face_encoding, 0.5)
+        results = face_recognition.compare_faces(known_faces, unknown_face_encoding, tolerance)
         logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))  
 
         logging.debug(known_faces_name)
