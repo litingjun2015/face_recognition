@@ -94,6 +94,7 @@ all_face_encodings = {}
 
 known_faces_path = './pics'
 unknown_faces_path = './pics/tmp/'
+new_faces_path = './pics/new/'
 
 
 
@@ -109,6 +110,7 @@ def initFacesFromDatafile():
    
     global known_faces
     global known_faces_name
+    global all_face_encodings
 
     if( len(known_faces) != 0):
         return
@@ -123,7 +125,8 @@ def initFacesFromDatafile():
 
     # Grab the list of names and the list of encodings
     known_faces_name = list(all_face_encodings.keys())
-    known_faces = np.array(list(all_face_encodings.values()))
+    # known_faces = np.array(list(all_face_encodings.values()))
+    known_faces = (list(all_face_encodings.values()))
 
     logging.debug("=============== load {} faces use {} seconds ===============" 
         .format( len(known_faces_name), round((time.time() - start_time), 2)) )
@@ -191,22 +194,7 @@ def initFaces():
         pickle.dump(all_face_encodings, f)
     
     logging.debug("======================================== use %s seconds ========================================" % round((time.time() - start_time), 2))
-
-    # biden_image = face_recognition.load_image_file("biden.jpg")
-    # obama_image = face_recognition.load_image_file("obama.jpg")
-    # litingjun_image = face_recognition.load_image_file("litingjun.jpg")
-
-    # biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
-    # obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
-    # litingjun_face_encoding = face_recognition.face_encodings(litingjun_image)[0]    
-
-    # known_faces_name.append("biden")
-    # known_faces_name.append("obama")
-    # known_faces_name.append("litingjun")
-
-    # known_faces.append(biden_face_encoding)
-    # known_faces.append(obama_face_encoding)
-    # known_faces.append(litingjun_face_encoding)
+  
 ###############################################################################
 
 
@@ -225,7 +213,45 @@ def initFaces():
 
 
 
+@app.route('/face/feature/add', methods=['POST'])
+def featureAdd():
 
+    global known_faces
+    global known_faces_name
+    global all_face_encodings
+
+    if not request.json or not 'username' in request.json:
+        abort(400)
+
+    if not request.json or not 'template' in request.json:
+        abort(400)
+
+    # For data is Base64
+    username = request.json['username']
+    imgdata = base64.b64decode( request.json['template'] )
+    
+    file_stream = new_faces_path + username + "_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg'  # I assume you have a way of picking unique filenames
+    # logging.debug("save data stream to file: " + file_stream) 
+    # logging.debug filename
+    with open(file_stream, 'wb') as f:
+        f.write(imgdata)
+
+    load_image = face_recognition.load_image_file( file_stream )
+    load_image_encoding = face_recognition.face_encodings(load_image)[0]
+    all_face_encodings[ username ] = load_image_encoding
+
+    known_faces_name.append( username )
+    known_faces.append( load_image_encoding )
+
+    with open('dataset_faces.dat', 'wb') as f:
+        pickle.dump(all_face_encodings, f)
+
+    result = {
+            "username": username,
+            "info": "success",       
+        }
+
+    return jsonify(result)
 
 
 @app.route('/face/image/matchN', methods=['POST'])
@@ -270,11 +296,7 @@ def matchN():
 
 
     if not request.json or not 'data' in request.json:
-        abort(400)
-    task = {
-        'data': request.json['data'],        
-    }
-    # logging.debug request.json['data']
+        abort(400)   
 
     # For data is Base64
     imgdata = base64.b64decode( request.json['data'] )
