@@ -35,6 +35,7 @@ import pickle
 import numpy as np
 
 
+
 @unique
 class Mode(Enum):
     m1_1 = 0 # 1:1
@@ -94,10 +95,6 @@ all_face_encodings = {}
 known_faces_path = './pics'
 unknown_faces_path = './pics/tmp/'
 
-def create_app():
-    # initFaces()
-    initFacesFromDatafile()
-    return Flask(__name__)
 
 
 def allowed_file(filename):
@@ -133,6 +130,12 @@ def initFacesFromDatafile():
 
 ###############################################################################
 
+def create_app():
+    # initFaces()
+    initFacesFromDatafile()
+    return Flask(__name__)
+
+app = create_app()
 
 ###############################################################################
 # Load the jpg files into arrays
@@ -202,7 +205,7 @@ def initFaces():
 
 
 
-app = create_app()
+
 
 
 
@@ -455,7 +458,8 @@ def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):
 
 
 
+
 if __name__ == "__main__":
-
-
     app.run(host='0.0.0.0', port=5001, debug=True)
+
+
