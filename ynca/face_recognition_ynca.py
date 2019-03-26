@@ -94,6 +94,17 @@ all_face_encodings = {}
 known_faces_path = './pics'
 unknown_faces_path = './pics/tmp/'
 
+def create_app():
+    # initFaces()
+    initFacesFromDatafile()
+    return Flask(__name__)
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 ###############################################################################
 # Load the jpg files into arrays
 ###############################################################################
@@ -184,10 +195,7 @@ def initFaces():
     # known_faces.append(litingjun_face_encoding)
 ###############################################################################
 
-def create_app():
-    # initFaces()
-    initFacesFromDatafile()
-    return Flask(__name__)
+
 
 
 
@@ -197,61 +205,11 @@ def create_app():
 app = create_app()
 
 
-def detect_faces_in_image(file_stream):
-
-    face_found = False
-    start_time = time.time()
-
-    # Load the uploaded image file
-    unknown_image = face_recognition.load_image_file(file_stream)
-    # logging.debug(unknown_image)
-    try:
-        # Get face encodings for any faces in the uploaded image
-        unknown_face_encodings = face_recognition.face_encodings(unknown_image)
-        # logging.debug(unknown_face_encodings)
-        unknown_face_encoding = unknown_face_encodings[0]
-        # logging.debug(unknown_face_encoding)
-        results = face_recognition.compare_faces(known_faces, unknown_face_encoding)
-        logging.debug(results) 
-        
-        if (not True in results):
-            logging.debug("该图片没有在我们的人脸库中")
-
-        i = 0
-        for result in results:
-            
-            if result and known_faces_name[i] != "tmp": 
-                face_found = True
-                username = known_faces_name[i]           
-
-            i = i+1
-
-        logging.debug("--- detect_faces_in_image used %s seconds ---" % round((time.time() - start_time), 2))
-
-    except IndexError:
-        logging.debug("该图片没有在我们的人脸库中，请重新拍摄")
-    
-
-    # Return the result as json
-    if ( face_found ):
-        result = {
-            "username": username,
-            "info": "success",       
-        }
-    else:
-        result = {
-            "info": "failed"
-        }
-    
-    
-    return jsonify(result)
 
 
 
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 
 
@@ -381,37 +339,6 @@ def match():
     logging.debug("call compare_faces_with_image") 
     return compare_faces_with_image(file_stream, username)
 
-
-
-
-
-
-@app.route('/', methods=['GET', 'POST'])
-def upload_image():
-    # Check if a valid image file was uploaded
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            return redirect(request.url)
-
-        file = request.files['file']
-
-        if file.filename == '':
-            return redirect(request.url)
-
-        if file and allowed_file(file.filename):
-            # The image file seems valid! Detect faces and return the result.
-            return detect_faces_in_image(file)
-
-    # If no valid image file was uploaded, show the file upload form:
-    return '''
-    <!doctype html>
-    <title>Is this a picture of Obama?</title>
-    <h1>Upload a picture and see if it's a picture of Obama!</h1>
-    <form method="POST" enctype="multipart/form-data">
-      <input type="file" name="file">
-      <input type="submit" value="Upload">
-    </form>
-    '''
 
 
 
