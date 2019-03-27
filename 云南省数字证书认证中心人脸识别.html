@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>云南省数字证书认证中心人脸识别</title>
+<script type='text/javascript' src='jquery-1.7.1.min.js'></script>
+<script type="text/javascript">
+	function loginFunction() {
+		var ret="";
+		$.ajax({
+			type: "GET",
+			async: true,//为避免写回调方法采用同步模式，也可采用异步但要写回调函数
+			cache:false,
+			url: "http://127.0.0.1:8899/login",
+			dataType: "text",
+			success : function(data){
+				ret=eval("("+data+")"); 
+				$("#login").val(ret)
+			},
+			error:function(XMLHttpRequest, textStautus, errothrown){
+				alert("请求数据异常:"+textStautus);
+			}
+		});
+		return;
+	}
+	
+	function collectImageFunction() {
+		var ret="";
+		$.ajax({
+			type: "GET",
+			async: true,//为避免写回调方法采用同步模式，也可采用异步但要写回调函数
+			cache:false,
+			url: "http://127.0.0.1:8899/collectImage",
+			dataType: "text",
+			success : function(data){
+				//ret=eval("("+data+")"); 
+				//ret = data.
+				$("#collectImage").val(ret);
+			},
+			error:function(XMLHttpRequest, textStautus, errothrown){
+				alert("请求数据异常:"+textStautus);
+			}
+		});
+		return;
+	}
+	
+	function loginPro() {
+		var ret="";
+		var username = "litingjun";
+		var image = $("#collectImage").val();
+		$.ajax({
+			type: "POST",
+			contentType:"application/x-www-form-urlencoded",
+			url: "http://192.168.2.70:5001/face/image/match",
+			data:{
+                    "username":username,
+                    "data":image
+                },
+			xhrFields:{withCredentials:true},
+			data : JSON.stringify({'username':username,'data':'data'}),
+			dataType: "text",
+			
+			success : function(data){
+				ret=eval("("+data+")"); 
+				$("#collectImage").val(ret)
+			},
+			error:function(XMLHttpRequest, textStautus, errothrown){
+				alert("请求数据异常:"+textStautus);
+			}
+		});
+		return;
+	}
+	
+</script>
+</head>
+<body>
+	<table>
+		<tr>
+			<td align="right" width="150px"><button value="基准图像采集" onclick="collectImageFunction()">基准图像采集</button></td>
+			<td><textarea id="collectImage" cols="100" rows="14"></textarea></td>
+		</tr>
+	</table>
+	
+	<table>
+		<tr>
+			<td align="right" width="150px"><button value="登录图像采集" onclick="loginFunction()">登录图像采集</button></td>
+			<td><textarea id="login" cols="100" rows="14"></textarea></td>
+		</tr>
+	</table>
+	
+	
+	<table>
+		<tr>
+			<td align="right" width="150px"><button value="登录验证" onclick="loginPro()">登录验证</button></td>
+			<td><input type="text" id="loginResult" value="" /></td>
+		</tr>
+	</table>
+</body>
+</html>

@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*-
+#!/usr/bin/env python
+# # -*- coding: UTF-8 -*-
 # 
 # # This is a _very simple_ example of a web service that recognizes faces in uploaded images.
 # Upload an image file and it will check if the image contains a picture of Barack Obama.
@@ -22,6 +23,16 @@
 
 import face_recognition
 from flask import Flask, jsonify, request, redirect, abort
+
+try:
+    from flask_cors import CORS, cross_origin  # The typical way to import flask-cors
+except ImportError:
+    # Path hack allows examples to be run without installation.
+    import os
+    parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    os.sys.path.insert(0, parentdir)
+
+    from flask_cors import CORS, cross_origin
 
 import base64
 import os
@@ -145,11 +156,17 @@ def create_app():
     # initFaces()
     initFacesFromDatafile()    
     app = Flask(__name__)
-    app.after_request(after_request)
+    # app.after_request(after_request)
+
+    app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy   dog'
+    app.config['CORS_HEADERS'] = 'Content-Type'
+
+    cors = CORS(app, resources={r"/face/image/match": {"origins": "http://192.168.2.76:5001"}})
 
     return app
 
 app = create_app()
+CORS(app, resources=r'/face/*')
 
 ###############################################################################
 # Load the jpg files into arrays
@@ -315,6 +332,7 @@ def matchN():
 
 
 @app.route('/face/image/match', methods=['POST'])
+@cross_origin() 
 def match():
 
     ######################################## check ######################################## 
