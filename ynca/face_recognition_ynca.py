@@ -27,7 +27,7 @@ from flask import Flask, jsonify, request, redirect, abort, make_response, curre
 from datetime import timedelta
 from functools import update_wrapper
 
-try:
+try:    
     from flask_cors import CORS, cross_origin  # The typical way to import flask-cors
 except ImportError:
     # Path hack allows examples to be run without installation.
@@ -47,6 +47,8 @@ from enum import Enum, unique
 
 import pickle
 import numpy as np
+
+logging.getLogger('flask_cors').level = logging.DEBUG
 
 def crossdomain(origin=None, methods=None, headers=None,
                 max_age=21600, attach_to_all=True,
@@ -201,6 +203,7 @@ def create_app():
     # initFaces()
     initFacesFromDatafile()    
     app = Flask(__name__)
+    CORS(app)
     # app.after_request(after_request)
 
     # app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy   dog'
@@ -211,7 +214,8 @@ def create_app():
     return app
 
 app = create_app()
-CORS(app, resources=r'/face/*')
+
+# CORS(app, resources=r'/face/*')
 
 ###############################################################################
 # Load the jpg files into arrays
