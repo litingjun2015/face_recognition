@@ -44,22 +44,23 @@
 		return;
 	}
 	
+	
 	function loginPro() {
 		var ret="";
 		var username = "litingjun";
 		var image = $("#collectImage").val();
 		$.ajax({
 			type: "POST",
-			contentType:"application/x-www-form-urlencoded",
+			contentType:'application/json; charset=utf-8',
 			url: "http://192.168.2.70:5001/face/image/match",
 			data:{
                     "username":username,
                     "data":image
                 },
-			xhrFields:{withCredentials:true},
+			xhrFields:{withCredentials:false},
 			data : JSON.stringify({'username':username,'data':'data'}),
-			dataType: "text",
-			
+			dataType: "json",
+			crossDomain: true,
 			success : function(data){
 				ret=eval("("+data+")"); 
 				$("#collectImage").val(ret)

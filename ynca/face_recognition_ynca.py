@@ -145,11 +145,11 @@ def initFacesFromDatafile():
 ###############################################################################
 
 
-def after_request(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'PUT,GET,POST,DELETE'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-    return response
+# def after_request(response):
+#     response.headers['Access-Control-Allow-Origin'] = '*'
+#     response.headers['Access-Control-Allow-Methods'] = 'PUT,GET,POST,DELETE'
+#     response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+#     return response
 
 
 def create_app():
@@ -158,10 +158,10 @@ def create_app():
     app = Flask(__name__)
     # app.after_request(after_request)
 
-    app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy   dog'
-    app.config['CORS_HEADERS'] = 'Content-Type'
+    # app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy   dog'
+    # app.config['CORS_HEADERS'] = 'Content-Type'
 
-    cors = CORS(app, resources={r"/face/image/match": {"origins": "http://192.168.2.76:5001"}})
+    # cors = CORS(app, resources={r"/face/image/match": {"origins": "http://192.168.2.76:5001"}})
 
     return app
 
