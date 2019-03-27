@@ -152,6 +152,35 @@ known_faces_path = './pics'
 unknown_faces_path = './pics/tmp/'
 new_faces_path = './pics/new/'
 
+initFromDir = False
+
+import sys, getopt
+
+
+
+
+
+
+def main(argv):
+   global initFromDir
+
+   try:
+      opts, args = getopt.getopt(argv,"di:",["ifile="])
+   except getopt.GetoptError:
+      print 'test.py -i <inputfile> -o <outputfile>'
+      sys.exit(2)
+   for opt, arg in opts:
+      if opt == '-d':
+         initFromDir = True
+      
+
+
+
+if __name__ == "__main__":
+   main(sys.argv[1:])
+
+
+
 
 
 def allowed_file(filename):
@@ -181,6 +210,8 @@ def initFacesFromDatafile():
 
     # Grab the list of names and the list of encodings
     known_faces_name = list(all_face_encodings.keys())
+
+    logging.debug(known_faces_name)
     # known_faces = np.array(list(all_face_encodings.values()))
     known_faces = (list(all_face_encodings.values()))
 
@@ -197,16 +228,6 @@ def after_request(response):
     return response
 
 
-def create_app():
-    print "Testing Cors ..."
-
-    # initFaces()
-    initFacesFromDatafile()    
-    app = Flask(__name__)
-    app.after_request(after_request)
-    CORS(app)
-
-
     # 
 
     # app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy   dog'
@@ -214,9 +235,9 @@ def create_app():
 
     # cors = CORS(app, resources={r"/face/image/match": {"origins": "http://192.168.2.76:5001"}})
 
-    return app
+    
 
-app = create_app()
+
 
 # CORS(app, resources=r'/face/*')
 
@@ -270,10 +291,24 @@ def initFaces():
 
 
 
+def create_app():    
+    global initFromDir
+
+    if initFromDir:
+        logging.debug("initFaces")
+        initFaces()
+    else:
+        logging.debug("initFacesFromDatafile")
+        initFacesFromDatafile()    
+
+    app = Flask(__name__)
+    app.after_request(after_request)
+    CORS(app)
+
+    return app
 
 
-
-
+app = create_app()
 
 
 
@@ -309,8 +344,11 @@ def featureAdd():
     load_image_encoding = face_recognition.face_encodings(load_image)[0]
     all_face_encodings[ username ] = load_image_encoding
 
-    known_faces_name.append( username )
-    known_faces.append( load_image_encoding )
+    known_faces_name = list(all_face_encodings.keys())
+    logging.debug(known_faces_name)
+
+    # known_faces = np.array(list(all_face_encodings.values()))
+    known_faces = (list(all_face_encodings.values()))
 
     with open('dataset_faces.dat', 'wb') as f:
         pickle.dump(all_face_encodings, f)
