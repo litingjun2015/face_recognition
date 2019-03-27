@@ -47,19 +47,16 @@
 	function loginPro() {
 		var ret="";
 		var username = "litingjun";
-		var image = $("#collectImage").val();
-		$.ajax({
-			type: "POST",
-			contentType:"application/x-www-form-urlencoded",
-			url: "http://192.168.2.70:5001/face/image/match",
-			data:{
+		var image = $("#collectImage").val();	
+		var data = {
                     "username":username,
                     "data":image
-                },
-			xhrFields:{withCredentials:true},
-			data : JSON.stringify({'username':username,'data':'data'}),
-			dataType: "text",
-			
+                };
+		$.ajax({					
+			type: "POST",
+			contentType:"application/json",
+			url: "http://192.168.2.70:5001/face/image/match",
+			data : JSON.stringify(data),						
 			success : function(data){
 				ret=eval("("+data+")"); 
 				$("#collectImage").val(ret)

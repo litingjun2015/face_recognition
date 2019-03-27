@@ -190,11 +190,11 @@ def initFacesFromDatafile():
 ###############################################################################
 
 
-# def after_request(response):
-#     response.headers['Access-Control-Allow-Origin'] = '*'
-#     response.headers['Access-Control-Allow-Methods'] = 'PUT,GET,POST,DELETE'
-#     response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-#     return response
+def after_request(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'PUT,GET,POST,DELETE'
+    response.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept'
+    return response
 
 
 def create_app():
@@ -203,8 +203,11 @@ def create_app():
     # initFaces()
     initFacesFromDatafile()    
     app = Flask(__name__)
+    app.after_request(after_request)
     CORS(app)
-    # app.after_request(after_request)
+
+
+    # 
 
     # app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy   dog'
     # app.config['CORS_HEADERS'] = 'Content-Type'
@@ -455,6 +458,8 @@ def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):
 
         process_username = os.path.splitext(username)[0]
 
+        unknown_face_encoding = ""
+
         # logging.debug('file_stream')
         # logging.debug file_stream
         # logging.debug('username='+username)
@@ -467,6 +472,7 @@ def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):
 
         start_time = time.time()
         # Get face encodings for any faces in the uploaded image
+        
         unknown_face_encodings = face_recognition.face_encodings(img)
         unknown_face_encoding = unknown_face_encodings[0]
         logging.debug("## face_encodings                       in %s seconds ##" %  round((time.time() - start_time), 2)      )
@@ -517,21 +523,27 @@ def compare_faces_with_image(file_stream, username, mode = Mode.m1_1):
     except IndexError:
         face_found = False   
     except IOError:
-        logging.debug("##################### 1:N Mode ###########################")
-        
-        results = face_recognition.compare_faces(known_faces, unknown_face_encoding, tolerance)
-        logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))  
+        if unknown_face_encoding == "":
+            result = {
+                "info": "failed",       
+            }
+            logging.debug(result)
+            return jsonify(result)
+        else:    
+            logging.debug("##################### 1:N Mode ###########################")
+                    
+            results = face_recognition.compare_faces(known_faces, unknown_face_encoding, tolerance)
+            logging.debug("## compare_faces                        in %s seconds ##" % round((time.time() - start_time), 2))  
 
-        logging.debug(known_faces_name)
-        logging.debug(results)
+            logging.debug(known_faces_name)
+            logging.debug(results)
 
-        face_found = False
-        for index in range(len(results)):
-            if results[index] == True:
-                face_found = True
-                process_username = known_faces_name[index]
-                break
-
+            face_found = False
+            for index in range(len(results)):
+                if results[index] == True:
+                    face_found = True
+                    process_username = known_faces_name[index]
+                    break
 
     logging.debug("## compare_faces_with_image used in total  %s seconds ##" % round((time.time() - begin_time), 2))
     logging.debug("##########################################################")  
