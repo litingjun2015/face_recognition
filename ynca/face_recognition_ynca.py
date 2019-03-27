@@ -262,9 +262,16 @@ def initFaces():
 
             load_image = face_recognition.load_image_file( os.path.join(known_faces_path, filename) )
             # logging.debug("load_image_file use %s seconds" % round((time.time() - start_time), 2))
+            # logging.debug(len(load_image))
+
+            load_image_encodings = face_recognition.face_encodings(load_image)
+            # logging.debug(len(load_image_encodings))
+
+            if len(load_image_encodings) == 0:
+                continue
 
             # start_time = time.time()  
-            load_image_encoding = face_recognition.face_encodings(load_image)[0]
+            load_image_encoding = load_image_encodings[0]
             # logging.debug(load_image_encoding)
             # logging.debug("face_encodings use %s seconds" % round((time.time() - start_time), 2))
             all_face_encodings[ username ] = load_image_encoding
