@@ -348,7 +348,14 @@ def featureAdd():
         f.write(imgdata)
 
     load_image = face_recognition.load_image_file( file_stream )
-    load_image_encoding = face_recognition.face_encodings(load_image)[0]
+    load_image_encodings = face_recognition.face_encodings(load_image)
+    if(len(load_image_encodings)==0):
+        result = {
+            "info": "failed",       
+        }
+        return jsonify(result)
+
+    load_image_encoding = load_image_encodings[0]
     all_face_encodings[ username ] = load_image_encoding
 
     known_faces_name = list(all_face_encodings.keys())
