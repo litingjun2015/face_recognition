@@ -148,7 +148,7 @@ known_faces_name = [
 
 all_face_encodings = {}
 
-known_faces_path = './pics'
+known_faces_path = './pics/known/'
 unknown_faces_path = './pics/tmp/'
 new_faces_path = './pics/new/'
 
